@@ -16,6 +16,6 @@ MAX_TRAIL_LEN = 8
 # Mekanik Game
 TIME_PER_LEVEL = 30  # Waktu per level dalam detik
 SPAWN_INTERVAL = 10  # Interval waktu untuk spawn buah (dalam milidetik)
-POINTS_PER_LEVEL = 250
+POINTS_PER_LEVEL = 150
 FRUIT_RADIUS = 35
 GRAVITY = 0.6
