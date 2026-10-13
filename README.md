@@ -10,9 +10,12 @@ memotong buah yang muncul di layar.
 - Posisi ujung jari telunjuk digunakan sebagai kursor/tebasan.
 - Jejak gerakan jari divisualisasikan sebagai garis berwarna cyan.
 - Buah muncul dari bagian bawah layar dengan lintasan dan warna acak.
-- Buah yang terkena garis tebasan menambah skor.
-- Level meningkat setiap 250 poin dan membuat kemunculan serta lontaran buah
-  menjadi lebih cepat.
+- Buah yang terkena garis tebasan menambah skor (+10), buah yang terlewat
+  mengurangi skor (-5).
+- Level meningkat setiap 150 poin dan membuat lontaran buah lebih cepat serta
+  lebih menyebar.
+- Layar "LEVEL UP!" dengan animasi teks, konfeti, dan efek suara (dibuat
+  langsung dengan kode, tanpa file audio) setiap naik level.
 - Tampilan kamera digunakan sebagai latar belakang permainan.
 
 ## Persyaratan
@@ -55,7 +58,7 @@ secara terbalik horizontal agar gerakan terasa seperti bercermin.
 
 | Tombol | Fungsi |
 | --- | --- |
-| `Space` | Menjeda atau melanjutkan permainan |
+| `Space` | Menjeda/melanjutkan permainan, atau menutup layar Level Up |
 | `Esc` | Keluar dari permainan |
 | Menunjukkan jari telunjuk | Menggerakkan kursor dan menebas buah |
 
@@ -65,10 +68,13 @@ secara terbalik horizontal agar gerakan terasa seperti bercermin.
 2. Arahkan ujung jari telunjuk ke buah yang bergerak.
 3. Gerakkan jari melewati area buah untuk memotongnya.
 4. Setiap buah yang terpotong memberikan 10 poin.
-5. Pantau skor dan level di kiri atas layar.
+5. Buah yang jatuh keluar layar tanpa terpotong mengurangi skor 5 poin.
+6. Pantau skor dan level di kiri atas layar.
+7. Saat skor mencapai kelipatan 150, layar **LEVEL UP!** muncul, permainan
+   berhenti sementara dan semua buah dibersihkan. Tekan `Space` untuk lanjut.
 
-Tidak ada sistem nyawa atau penalti untuk buah yang terlewat. Buah akan
-dihapus setelah keluar dari area permainan atau setelah berhasil dipotong.
+Tidak ada sistem nyawa, sehingga permainan tidak pernah berakhir; skor bisa
+menjadi negatif. Level hanya naik dan tidak turun walau skor berkurang.
 
 ## Konfigurasi
 
@@ -82,8 +88,9 @@ Pengaturan utama terdapat di [`config.py`](config.py):
 | `LOWER_COLOR` / `UPPER_COLOR` | HSV | Rentang warna; saat ini belum digunakan oleh tracker |
 | `MIN_CONTOUR_AREA` | `400` | Parameter area kontur; saat ini belum digunakan |
 | `MAX_TRAIL_LEN` | `8` | Panjang maksimum jejak jari |
-| `SPAWN_INTERVAL` | `10` | Interval dasar kemunculan buah dalam frame |
-| `POINTS_PER_LEVEL` | `250` | Poin yang diperlukan untuk naik level |
+| `TIME_PER_LEVEL` | `30` | Waktu per level (detik); saat ini belum digunakan |
+| `SPAWN_INTERVAL` | `10` | Interval dasar kemunculan buah dalam frame (lihat catatan di bawah) |
+| `POINTS_PER_LEVEL` | `150` | Poin yang diperlukan untuk naik level |
 | `FRUIT_RADIUS` | `35` | Radius buah |
 | `GRAVITY` | `0.6` | Gravitasi buah |
 
@@ -104,7 +111,7 @@ Comp Vis Fruit Ninja/
 ├── cv_tracker.py    # Akses webcam dan pelacakan ujung jari dengan MediaPipe
 ├── fruit.py         # Logika gerak dan gambar buah
 ├── config.py        # Konfigurasi tampilan, computer vision, dan gameplay
-├── utils.py         # Pemeriksaan irisan garis tebasan dengan buah
+├── utils.py         # Irisan garis tebasan dengan buah & efek suara level up
 ├── requirements.txt # Daftar dependensi Python
 └── README.md        # Dokumentasi proyek
 ```
@@ -116,7 +123,7 @@ Dependensi proyek didefinisikan di [`requirements.txt`](requirements.txt):
 - `pygame` untuk jendela, input, dan rendering game.
 - `opencv-python` untuk membaca serta memproses frame webcam.
 - `mediapipe` untuk mendeteksi landmark tangan.
-- `numpy` untuk operasi array dan perhitungan ketebalan jejak.
+- `numpy` untuk operasi array, ketebalan jejak, dan sintesis suara level up.
 - `pymunk` tercantum sebagai dependensi proyek, meskipun logika fisika saat
   ini diimplementasikan langsung di `fruit.py`.
 
@@ -151,3 +158,12 @@ Program utama dijalankan dari `main.py`. Setiap frame diproses oleh
 terhadap lingkaran buah oleh `line_intersects_circle` di `utils.py`.
 Perubahan aturan skor, level, atau fisika buah dapat dilakukan di
 `config.py` dan `fruit.py`.
+
+Level dihitung sebagai `skor // POINTS_PER_LEVEL + 1`. Saat level naik,
+`main.py` menandai `is_level_up`, membersihkan buah, memulai animasi konfeti,
+dan memainkan suara dari `make_levelup_sound` (arpeggio C-E-G-C).
+
+Catatan: interval kemunculan buah dihitung `max(12, SPAWN_INTERVAL - (level - 1) * 4)`,
+sehingga karena `SPAWN_INTERVAL` bernilai 10, hasilnya selalu 12 frame. Tingkat
+kesulitan antarlevel saat ini hanya berasal dari kecepatan lontaran buah
+(`fruit.py`).
